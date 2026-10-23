@@ -1,4 +1,5 @@
 import db from '../config/db.js';
+import { randomBytes } from 'node:crypto';
 
 // Listar todas as recompensas
 export const getRecompensas = async (req, res) => {
@@ -17,7 +18,7 @@ export const getRecompensas = async (req, res) => {
         ativa,
         created_at
        FROM recompensas
-       WHERE ativa = 1
+       WHERE ativa = TRUE
        ORDER BY pontos_necessarios ASC`
     );
 
@@ -84,7 +85,7 @@ export const createRecompensa = async (req, res) => {
 
     const [resultado] = await db.query(
       `INSERT INTO recompensas (titulo, descricao, pontos_necessarios, tipo, valor_desconto, servico_gratis_id, dinheiro_valor, ativa)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)`,
       [titulo, descricao, pontos_necessarios, tipo, valor_desconto || null, servico_gratis_id || null, dinheiro_valor || null]
     );
 
@@ -182,7 +183,7 @@ export const deleteRecompensa = async (req, res) => {
 
     // Desativar em vez de deletar
     await db.query(
-      'UPDATE recompensas SET ativa = 0 WHERE id = ?',
+      'UPDATE recompensas SET ativa = FALSE WHERE id = ?',
       [id]
     );
 
@@ -203,78 +204,75 @@ export const resgatarRecompensa = async (req, res) => {
   try {
     const { cliente_id, recompensa_id } = req.body;
 
-    // Validações
-    if (!cliente_id || !recompensa_id) {
+    if ((!cliente_id && req.usuario.tipo === 'admin') || !recompensa_id) {
       return res.status(400).json({ 
-        message: 'cliente_id e recompensa_id são obrigatórios' 
+        message: 'recompensa_id e um cliente válido são obrigatórios'
       });
     }
 
-    // Buscar cliente
-    const [clientes] = await db.query(
-      'SELECT saldo_pontos FROM clientes WHERE id = ?',
-      [cliente_id]
-    );
+    const codigo_resgate = `BELLA${randomBytes(6).toString('hex').toUpperCase()}`;
+    const resultado = await db.transaction(async (tx) => {
+      const [clientes] = req.usuario.tipo === 'cliente'
+        ? await tx.query(
+          'SELECT id, saldo_pontos FROM clientes WHERE usuario_id = ? FOR UPDATE',
+          [req.usuario.id]
+        )
+        : await tx.query(
+          'SELECT id, saldo_pontos FROM clientes WHERE id = ? FOR UPDATE',
+          [cliente_id]
+        );
 
-    if (clientes.length === 0) {
-      return res.status(404).json({ 
-        message: 'Cliente não encontrado' 
-      });
-    }
+      if (clientes.length === 0) return { error: 'Cliente não encontrado', status: 404 };
+      const cliente = clientes[0];
 
-    const cliente = clientes[0];
-
-    // Buscar recompensa
-    const [recompensas] = await db.query(
-      'SELECT pontos_necessarios, quantidade_disponivel FROM recompensas WHERE id = ?',
-      [recompensa_id]
-    );
-
-    if (recompensas.length === 0) {
-      return res.status(404).json({ 
-        message: 'Recompensa não encontrada' 
-      });
-    }
-
-    const recompensa = recompensas[0];
-
-    // Validar pontos
-    if (cliente.saldo_pontos < recompensa.pontos_necessarios) {
-      return res.status(400).json({ 
-        message: 'Saldo de pontos insuficiente',
-        saldo_atual: cliente.saldo_pontos,
-        pontos_necessarios: recompensa.pontos_necessarios
-      });
-    }
-
-    // Validar quantidade disponível
-    if (recompensa.quantidade_disponivel !== -1 && recompensa.quantidade_disponivel <= 0) {
-      return res.status(400).json({ 
-        message: 'Recompensa sem disponibilidade' 
-      });
-    }
-
-    // Gerar código de resgate único
-    const codigo_resgate = `BELLA${Date.now().toString().slice(-8)}${Math.floor(Math.random() * 1000)}`;
-
-    // Inserir resgate (trigger irá remover pontos)
-    const [resultado] = await db.query(
-      `INSERT INTO resgates_recompensas (cliente_id, recompensa_id, codigo_resgate, status)
-       VALUES (?, ?, ?, 'pendente')`,
-      [cliente_id, recompensa_id, codigo_resgate]
-    );
-
-    // Atualizar quantidade disponível
-    if (recompensa.quantidade_disponivel !== -1) {
-      await db.query(
-        'UPDATE recompensas SET quantidade_disponivel = quantidade_disponivel - 1 WHERE id = ?',
+      const [recompensas] = await tx.query(
+        'SELECT pontos_necessarios, quantidade_disponivel FROM recompensas WHERE id = ? AND ativa = TRUE FOR UPDATE',
         [recompensa_id]
       );
+      if (recompensas.length === 0) return { error: 'Recompensa não encontrada ou inativa', status: 404 };
+
+      const recompensa = recompensas[0];
+      if (cliente.saldo_pontos < recompensa.pontos_necessarios) {
+        return {
+          error: 'Saldo de pontos insuficiente',
+          status: 400,
+          saldo_atual: cliente.saldo_pontos,
+          pontos_necessarios: recompensa.pontos_necessarios,
+        };
+      }
+      if (recompensa.quantidade_disponivel !== -1 && recompensa.quantidade_disponivel <= 0) {
+        return { error: 'Recompensa sem disponibilidade', status: 400 };
+      }
+
+      if (recompensa.quantidade_disponivel !== -1) {
+        await tx.query(
+          'UPDATE recompensas SET quantidade_disponivel = quantidade_disponivel - 1 WHERE id = ? AND quantidade_disponivel > 0',
+          [recompensa_id]
+        );
+      }
+
+      const [resgate] = await tx.query(
+        `INSERT INTO resgates_recompensas (cliente_id, recompensa_id, codigo_resgate, status)
+         VALUES (?, ?, ?, 'pendente')`,
+        [cliente.id, recompensa_id, codigo_resgate]
+      );
+
+      return { id: resgate.insertId, clienteId: cliente.id };
+    });
+
+    if (resultado.error) {
+      return res.status(resultado.status).json({
+        message: resultado.error,
+        ...(resultado.saldo_atual !== undefined ? {
+          saldo_atual: resultado.saldo_atual,
+          pontos_necessarios: resultado.pontos_necessarios,
+        } : {}),
+      });
     }
 
     res.status(201).json({
-      id: resultado.insertId,
-      cliente_id,
+      id: resultado.id,
+      cliente_id: resultado.clienteId,
       recompensa_id,
       codigo_resgate,
       status: 'pendente',
@@ -307,10 +305,11 @@ export const getResgatesPorCliente = async (req, res) => {
         rr.status,
         rr.codigo_resgate
        FROM resgates_recompensas rr
+       JOIN clientes c ON rr.cliente_id = c.id
        JOIN recompensas r ON rr.recompensa_id = r.id
-       WHERE rr.cliente_id = ?
+       WHERE rr.cliente_id = ?${req.usuario.tipo === 'cliente' ? ' AND c.usuario_id = ?' : ''}
        ORDER BY rr.data_resgate DESC`,
-      [cliente_id]
+      req.usuario.tipo === 'cliente' ? [cliente_id, req.usuario.id] : [cliente_id]
     );
 
     res.json(resgates);
@@ -334,37 +333,27 @@ export const utilizarResgate = async (req, res) => {
       });
     }
 
-    // Buscar resgate
-    const [resgates] = await db.query(
-      'SELECT id, status FROM resgates_recompensas WHERE codigo_resgate = ?',
+    const [atualizados] = await db.query(
+      `UPDATE resgates_recompensas
+       SET status = 'utilizado', data_utilizacao = NOW()
+       WHERE codigo_resgate = ? AND status = 'pendente'
+       RETURNING id`,
       [codigo_resgate]
     );
-
-    if (resgates.length === 0) {
-      return res.status(404).json({ 
-        message: 'Código de resgate não encontrado' 
+    if (atualizados.length === 0) {
+      const [resgates] = await db.query(
+        'SELECT status FROM resgates_recompensas WHERE codigo_resgate = ?',
+        [codigo_resgate]
+      );
+      if (resgates.length === 0) {
+        return res.status(404).json({ message: 'Código de resgate não encontrado' });
+      }
+      return res.status(409).json({
+        message: resgates[0].status === 'cancelado'
+          ? 'Este resgate foi cancelado'
+          : 'Este resgate já foi utilizado',
       });
     }
-
-    const resgate = resgates[0];
-
-    if (resgate.status === 'utilizado') {
-      return res.status(400).json({ 
-        message: 'Este resgate já foi utilizado' 
-      });
-    }
-
-    if (resgate.status === 'cancelado') {
-      return res.status(400).json({ 
-        message: 'Este resgate foi cancelado' 
-      });
-    }
-
-    // Atualizar resgate
-    await db.query(
-      'UPDATE resgates_recompensas SET status = ?, data_utilizacao = NOW() WHERE id = ?',
-      ['utilizado', resgate.id]
-    );
 
     res.json({ 
       message: 'Resgate utilizado com sucesso',

@@ -4,9 +4,11 @@ import { useContext } from 'react';
 import { AuthContext } from './context/AuthContext';
 
 import LandingPage from './pages/LandingPage';
+import SobreBellaChain from './pages/SobreBellaChain';
 import Login from './pages/Login';
 import DashboardCliente from './pages/DashboardCliente';
 import DashboardFuncionario from './pages/DashboardFuncionario';
+import PacotesPortal from './pages/PacotesPortal';
 
 // Componente de rota protegida
 function RotaProtegida({ element, tipoUsuario }) {
@@ -25,8 +27,8 @@ function RotaProtegida({ element, tipoUsuario }) {
   }
 
   if (tipoUsuario && usuario.tipo !== tipoUsuario && usuario.tipo !== 'admin') {
-    // Redirecionar para o dashboard apropriado
-    return <Navigate to={usuario.tipo === 'cliente' ? '/dashboard-cliente' : '/dashboard-funcionario'} replace />;
+    const rotaCorreta = usuario.tipo === 'cliente' ? '/dashboard-cliente' : usuario.tipo === 'admin' ? '/dashboard-admin' : '/dashboard-funcionario';
+    return <Navigate to={rotaCorreta} replace />;
   }
 
   return element;
@@ -39,21 +41,30 @@ export default function Router() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/sobre" element={<SobreBellaChain />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/pacotes" element={<RotaProtegida element={<PacotesPortal />} />} />
         <Route
           path="/dashboard-cliente"
-          element={<RotaProtegida element={<DashboardCliente />} tipoUsuario="cliente" />}
+          element={<RotaProtegida element={<PacotesPortal />} tipoUsuario="cliente" />}
+        />
+        <Route
+          path="/dashboard-admin"
+          element={<RotaProtegida element={<PacotesPortal />} tipoUsuario="admin" />}
         />
         <Route
           path="/dashboard-funcionario"
-          element={<RotaProtegida element={<DashboardFuncionario />} tipoUsuario="funcionario" />}
+          element={<RotaProtegida element={<PacotesPortal />} tipoUsuario="funcionario" />}
         />
+        <Route path="/legado-pontos" element={<RotaProtegida element={usuario?.tipo === 'cliente' ? <DashboardCliente /> : <DashboardFuncionario />} />} />
         <Route
           path="*"
           element={
             usuario ? (
               usuario.tipo === 'cliente' ? (
                 <Navigate to="/dashboard-cliente" replace />
+              ) : usuario.tipo === 'admin' ? (
+                <Navigate to="/dashboard-admin" replace />
               ) : (
                 <Navigate to="/dashboard-funcionario" replace />
               )

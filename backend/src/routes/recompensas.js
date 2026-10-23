@@ -14,10 +14,10 @@ router.put('/:id', autenticar, autorizarPor('admin'), recompensasController.upda
 router.delete('/:id', autenticar, autorizarPor('admin'), recompensasController.deleteRecompensa);
 
 // Rota de resgate (cliente autenticado)
-router.post('/resgatar', autenticar, recompensasController.resgatarRecompensa);
+router.post('/resgatar', autenticar, autorizarPor('cliente'), recompensasController.resgatarRecompensa);
 
 // Rotas de resgates
-router.get('/cliente/:cliente_id/resgates', recompensasController.getResgatesPorCliente);
-router.put('/resgatar/utilizar', autenticar, recompensasController.utilizarResgate);
+router.get('/cliente/:cliente_id/resgates', autenticar, autorizarPor('cliente', 'funcionario'), recompensasController.getResgatesPorCliente);
+router.put('/resgatar/utilizar', autenticar, autorizarPor('funcionario'), recompensasController.utilizarResgate);
 
 export default router;

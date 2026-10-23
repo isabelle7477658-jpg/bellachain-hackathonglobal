@@ -1,0 +1,14 @@
+[features]
+seeds = true
+skip-lint = false
+
+[programs.localnet]
+bella_packages = "Fg6PaFpoGXkYsidMpWxTWqkZ8S6J9s8fU9QyM6wPLw6"
+
+[programs.devnet]
+bella_packages = "Fg6PaFpoGXkYsidMpWxTWqkZ8S6J9s8fU9QyM6wPLw6"
+
+[provider]
+cluster = "Localnet"
+wallet = "~/.config/solana/id.json"
+

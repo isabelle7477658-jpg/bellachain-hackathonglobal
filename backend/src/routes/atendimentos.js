@@ -5,9 +5,9 @@ import { autenticar, autorizarPor } from '../middleware/authMiddleware.js';
 const router = Router();
 
 // Rotas de leitura (públicas)
-router.get('/', atendimentosController.getAtendimentos);
-router.get('/:id', atendimentosController.getAtendimentoById);
-router.get('/cliente/:cliente_id', atendimentosController.getAtendimentosPorCliente);
+router.get('/', autenticar, autorizarPor('cliente', 'funcionario'), atendimentosController.getAtendimentos);
+router.get('/cliente/:cliente_id', autenticar, autorizarPor('cliente', 'funcionario'), atendimentosController.getAtendimentosPorCliente);
+router.get('/:id', autenticar, autorizarPor('cliente', 'funcionario'), atendimentosController.getAtendimentoById);
 
 // Rotas de escrita (apenas funcionário e admin)
 router.post('/', autenticar, autorizarPor('funcionario', 'admin'), atendimentosController.createAtendimento);

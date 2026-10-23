@@ -182,6 +182,7 @@ export default function DashboardCliente() {
           </button>
         </div>
       </nav>
+      <div className="max-w-7xl mx-auto px-4 pt-3"><a href="/pacotes" className="font-bold text-purple-700 hover:text-purple-900">Pacotes e carteira Solana →</a></div>
 
       {/* Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">

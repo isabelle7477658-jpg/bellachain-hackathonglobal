@@ -1,148 +1,41 @@
-# BellaChain
+﻿# BellaChain
 
-Sistema de fidelidade para salões de beleza com integração de blockchain, gestão de clientes, pontuação por atendimentos e recompensas digitais.
+Aplicação para conectar clientes a salões e prestadores, com catálogo de serviços, agenda e regras de cancelamento. A prioridade atual é estruturar esses fluxos operacionais; pagamentos, pacotes pré-pagos e blockchain serão tratados em uma fase posterior. Pontos e recompensas são legado. Consulte ESTRUTURA_APLICACAO.md para a arquitetura proposta e IMPLEMENTACAO_ANALISE.md para os gaps atuais.
 
-## Visão geral
+## Componentes
 
-O BellaChain foi pensado para modernizar a experiência de fidelização em salões de beleza. O sistema permite:
+- Frontend: React, Vite e Tailwind CSS.
+- Backend: Node.js e Express.
+- Banco: Supabase PostgreSQL, acessado pelo backend com SUPABASE_DATABASE_URL.
+- AutenticaÃ§Ã£o: JWT e bcrypt.
+- Blockchain: programa Anchor/Solana em desenvolvimento; o contrato EVM Ã© legado e nÃ£o liquida pacotes.
 
-- cadastrar clientes e funcionários;
-- registrar atendimentos;
-- gerar BellaPoints conforme o valor do serviço;
-- consultar saldo e histórico de pontos;
-- gerenciar recompensas e resgates;
-- manter registros de transações em ambiente blockchain.
+## Funcionalidades legadas presentes
 
-## Objetivo
+- Cadastro pÃºblico de clientes e login por perfil.
+- Consulta do perfil do cliente e dos prÃ³prios atendimentos.
+- Cadastro de serviÃ§os e recompensas por rotas protegidas.
+- Registro de atendimento e crÃ©dito de pontos configurados no campo `servicos.pontos_por_servico`.
+- Resgate de recompensa com dÃ©bito de pontos e geraÃ§Ã£o de cÃ³digo.
+- RecuperaÃ§Ã£o de senha por token; o envio do link ainda Ã© demonstrativo no ambiente de desenvolvimento.
 
-Desenvolver um protótipo funcional de programa de fidelidade para salões de beleza, combinando uma interface amigável com a rastreabilidade e a segurança proporcionadas pela tecnologia blockchain.
+## ConfiguraÃ§Ã£o local
 
-## Funcionalidades principais
+1. Configure um projeto Supabase e aplique `database/schema.sql`, `database/migrations/20261023_solana_packages.sql` e, uma vez, `database/seeds.sql`.
+2. Copie `backend/.env.example` para `backend/.env` e configure SUPABASE_DATABASE_URL e JWT_SECRET.
+3. Instale dependÃªncias em `backend` e `frontend` com `npm install`.
+4. Inicie o backend com `npm run dev` dentro de `backend`.
+5. Inicie o frontend com `npm run dev` dentro de `frontend`.
 
-### Cliente
-- cadastro e login;
-- consulta de saldo de BellaPoints;
-- histórico de ganhos e resgates;
-- visualização de recompensas disponíveis.
+O frontend usa `VITE_API_URL=http://localhost:3001/api` se a variÃ¡vel nÃ£o estiver definida. O modo demo deve ser usado apenas em desenvolvimento; ele nÃ£o persiste os dados de negÃ³cio.
 
-### Funcionário
-- identificação de clientes;
-- registro de atendimentos;
-- geração automática de pontos;
-- acompanhamento de serviços realizados.
+## Solana e contratos
 
-### Administrador
-- cadastro de serviços;
-- cadastro de recompensas;
-- configuração do programa de fidelização;
-- consulta de métricas e relatórios.
+O programa Anchor estÃ¡ em `solana-programs/bella-packages`. PublicaÃ§Ã£o de pacotes e compra jÃ¡ assinam transaÃ§Ãµes Devnet pelo portal. Reserva, cancelamento e liquidaÃ§Ã£o bilateral ainda precisam do fluxo de assinatura coordenada; faltam IDL de build e indexador. As transaÃ§Ãµes exigem RPC, Program ID, mint SPL e casas decimais configurados para Devnet. O contrato Solidity em `smart-contracts/contracts/BellaPoints.sol` Ã© legado.
 
-## Regras de negócio
+## Estado e validacao
 
-- a pontuação é calculada a partir do valor do atendimento;
-- pontos são gerados apenas para atendimentos concluídos;
-- o saldo é calculado com base nos pontos recebidos e utilizados;
-- resgates só são permitidos quando o cliente possui saldo suficiente;
-- registros de pontos e recompensas devem ser rastreáveis.
+Consulte `IMPLEMENTACAO_ANALISE.md` para gaps, prioridades e itens que ainda precisam de validacao. Os arquivos SQL e fluxos alterados precisam ser verificados em um PostgreSQL de desenvolvimento antes de uso operacional.
 
-## Stack tecnológica
 
-- Frontend: React + Vite + Tailwind CSS
-- Backend: Node.js + Express
-- Banco de dados: MySQL
-- Autenticação: JWT + bcrypt
-- Contrato inteligente: Solidity + Hardhat
 
-## Estrutura do projeto
-
-```text
-bella-chain/
-├── backend/
-│   ├── src/
-│   ├── package.json
-│   └── .env
-├── frontend/
-│   ├── src/
-│   ├── package.json
-│   └── vite.config.js
-├── smart-contracts/
-│   ├── contracts/
-│   ├── scripts/
-│   └── hardhat.config.js
-├── database/
-│   ├── schema.sql
-│   └── seeds.sql
-├── .gitignore
-├── .gitattributes
-├── README.md
-└── package.json
-```
-
-## Como executar
-
-### 1) Instalar dependências
-
-#### Backend
-```bash
-cd backend
-npm install
-```
-
-#### Frontend
-```bash
-cd frontend
-npm install
-```
-
-#### Smart contracts
-```bash
-cd smart-contracts
-npm install
-```
-
-### 2) Configurar banco de dados
-
-Crie o banco e execute os scripts em:
-
-- `database/schema.sql`
-- `database/seeds.sql`
-
-### 3) Configurar variáveis de ambiente
-
-No backend, crie um arquivo `.env` com os dados de conexão ao MySQL e a porta do servidor.
-
-### 4) Rodar a aplicação
-
-Backend:
-```bash
-cd backend
-npm run dev
-```
-
-Frontend:
-```bash
-cd frontend
-npm run dev
-```
-
-Smart contract:
-```bash
-cd smart-contracts
-npx hardhat compile
-```
-
-## Fluxo principal
-
-1. o cliente ou funcionário realiza login;
-2. o funcionário registra um atendimento;
-3. o sistema calcula os BellaPoints;
-4. os pontos são registrados no histórico do cliente;
-5. o cliente pode resgatar recompensas usando o saldo disponível.
-
-## Observações
-
-Este projeto é um protótipo acadêmico e pode ser expandido com melhorias em autenticação, relatórios, UX e integração mais robusta com blockchain.
-
-## Licença
-
-Este projeto foi desenvolvido como estudo e protótipo interno sem uma licença comercial definida.

@@ -1,15 +1,15 @@
-﻿import { Router } from 'express';
+import { Router } from 'express';
 import * as clientesController from '../controllers/clientesController.js';
 import { autenticar, autorizarPor } from '../middleware/authMiddleware.js';
 
 const router = Router();
 
 // Rotas pÃºblicas
-router.get('/', clientesController.getClientes);
+router.get('/', autenticar, autorizarPor('funcionario'), clientesController.getClientes);
 
 // Specific route must precede the dynamic /:id route.
-router.get('/meu-perfil', autenticar, clientesController.getMeuPerfil);
-router.get('/:id', clientesController.getClienteById);
+router.get('/meu-perfil', autenticar, autorizarPor('cliente'), clientesController.getMeuPerfil);
+router.get('/:id', autenticar, autorizarPor('funcionario'), clientesController.getClienteById);
 
 // Rotas protegidas
 router.post('/', autenticar, autorizarPor('admin'), clientesController.createCliente);

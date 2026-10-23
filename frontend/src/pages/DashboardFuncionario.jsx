@@ -5,6 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 export default function DashboardFuncionario() {
   const { usuario, token, logout } = useContext(AuthContext);
+  const isAdmin = usuario?.tipo === 'admin';
   const [currentView, setCurrentView] = useState('registrar');
   const [clientes, setClientes] = useState([]);
   const [servicos, setServicos] = useState([]);
@@ -158,7 +159,7 @@ export default function DashboardFuncionario() {
         <div className="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">BellaChain</h1>
-            <p className="text-pink-100 text-sm">Painel Funcionário</p>
+            <p className="text-pink-100 text-sm">{isAdmin ? 'Painel de Administração' : 'Painel Funcionário'}</p>
           </div>
           <div className="flex items-center gap-6">
             <div className="text-right">
@@ -210,6 +211,15 @@ export default function DashboardFuncionario() {
           </button>
         </div>
       </nav>
+      <div className="max-w-7xl mx-auto px-4 pt-3"><a href="/pacotes" className="font-bold text-pink-700 hover:text-pink-900">Pacotes Solana →</a></div>
+
+      {isAdmin && (
+        <div className="max-w-7xl mx-auto px-4 pt-6">
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-medium">
+            Acesso administrativo ativo: você pode gerenciar clientes, serviços e atendimentos.
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">

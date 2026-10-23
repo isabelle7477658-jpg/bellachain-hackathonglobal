@@ -1,9 +1,10 @@
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { requireJwtSecret } from '../config/security.js';
 
 dotenv.config();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'sua_chave_secreta_super_segura';
+const JWT_SECRET = requireJwtSecret();
 
 // Middleware para autenticar JWT
 export const autenticar = (req, res, next) => {
@@ -44,7 +45,9 @@ export const autorizarPor = (...tipos) => {
       });
     }
 
-    if (!tipos.includes(req.usuario.tipo)) {
+    const temPermissao = req.usuario.tipo === 'admin' || tipos.includes(req.usuario.tipo);
+
+    if (!temPermissao) {
       return res.status(403).json({ 
         message: 'Acesso negado. Você não tem permissão para esta ação.',
         tipo_usuario: req.usuario.tipo,

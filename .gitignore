@@ -7,4 +7,9 @@ node_modules/
 dist/
 build/
 coverage/
+target/
+.anchor/
 .DS_Store
+
+# Keep safe environment templates versioned
+!**/.env.example

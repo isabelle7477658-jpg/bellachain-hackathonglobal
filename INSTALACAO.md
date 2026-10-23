@@ -1,245 +1,70 @@
-# GUIA DE INSTALAÇÃO - BellaChain
+﻿# Instalacao e execucao local - BellaChain
 
-## 1. REQUISITOS
+## Requisitos
 
-- Node.js 18+
-- MySQL 8.0+
-- npm ou yarn
+- Node.js 18 ou superior e npm.
+- Projeto Supabase com connection string PostgreSQL.
 
-## 2. INSTALAÇÃO DO BANCO DE DADOS
+## Banco de dados
 
-### Passo 1: Criar o banco de dados e tabelas
+Use o banco PostgreSQL do Supabase. Execute `database/schema.sql`, depois `database/migrations/20261023_solana_packages.sql` e por fim `database/seeds.sql` uma vez.
 
-```bash
-mysql -u root -p < database/schema.sql
-```
+Para Supabase, use a connection string em **Project Settings > Database**. A URL HTTP publica do projeto nao e uma connection string PostgreSQL.
 
-Isso irá:
-- Criar o banco de dados `bellachain`
-- Criar todas as tabelas necessárias
-- Criar triggers para lógica automática de pontos
+## Backend
 
-### Passo 2: Inserir dados de teste
-
-```bash
-mysql -u root -p bellachain < database/seeds.sql
-```
-
-Isso irá inserir:
-- 1 usuário admin
-- 2 funcionários
-- 4 clientes
-- 10 serviços
-- 8 recompensas
-- Dados de exemplo de atendimentos
-
-### Verificar instalação
-
-```bash
-mysql -u root -p
-> USE bellachain;
-> SHOW TABLES;
-> SELECT COUNT(*) FROM usuarios;
-```
-
-## 3. INSTALAÇÃO DO BACKEND
-
-### Passo 1: Navegar até a pasta backend
-
-```bash
+```powershell
 cd backend
-```
-
-### Passo 2: Instalar dependências
-
-```bash
+Copy-Item .env.example .env
 npm install
+npm run dev
 ```
 
-### Passo 3: Configurar variáveis de ambiente
-
-```bash
-cp .env.example .env
-```
-
-Edite o arquivo `.env` com suas credenciais do MySQL:
+Edite `backend/.env` e configure pelo menos:
 
 ```env
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=sua_senha
-DB_NAME=bellachain
-JWT_SECRET=sua_chave_secreta_aqui
+PORT=3001
+NODE_ENV=development
+SUPABASE_DATABASE_URL=postgresql://postgres:[DB_PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres
+JWT_SECRET=gere-uma-chave-longa-e-aleatoria
+ENABLE_DEMO_LOGIN=true
+FRONTEND_URL=http://localhost:5173
 ```
 
-### Passo 4: Executar em desenvolvimento
+Use uma chave JWT longa e privada. Nao versione `.env`. A conexao do backend com o Supabase usa TLS.
 
-```bash
-npm run dev
-```
+## Frontend
 
-Acesse: http://localhost:3001/api
+Em outro terminal:
 
-## 4. INSTALAÇÃO DO FRONTEND
-
-### Passo 1: Navegar até a pasta frontend
-
-```bash
+```powershell
 cd frontend
-```
-
-### Passo 2: Instalar dependências
-
-```bash
 npm install
-```
-
-### Passo 3: Configurar variáveis de ambiente
-
-```bash
-cp .env.example .env
-```
-
-Verifique se a URL da API está correta:
-
-```env
-VITE_API_URL=http://localhost:3001/api
-```
-
-### Passo 4: Executar em desenvolvimento
-
-```bash
 npm run dev
 ```
 
-Acesse: http://localhost:5173
+Por padrao, o frontend chama `http://localhost:3001/api`. Para outro endereco, defina `VITE_API_URL` antes de iniciar o Vite. `VITE_ENABLE_DEMO_LOGIN` so habilita o fallback local durante desenvolvimento.
 
-## 5. EXECUTAR TUDO
+## Contrato EVM legado
 
-**Terminal 1 - Backend:**
-```bash
-cd backend
-npm run dev
-```
+O contrato Hardhat em `smart-contracts` mantÃ©m o protÃ³tipo antigo de pontos e nÃ£o participa do fluxo de pacotes.
 
-**Terminal 2 - Frontend:**
-```bash
-cd frontend
-npm run dev
-```
+## Notas de operacao
 
-## 6. CREDENCIAIS PADRÃO
+- Rotas que consultam dados privados exigem JWT.
+- O cadastro publico cria somente clientes.
+- O fluxo demo nao representa persistencia de pontos, atendimentos ou resgates.
+- A recuperacao de senha imprime o link no log em desenvolvimento; nao existe envio de email configurado.
+- O estado de implementacao e os gaps restantes estao em `IMPLEMENTACAO_ANALISE.md`.
+- A validacao com banco, testes de integracao e compilacao/deploy do contrato ainda precisa ser feita no ambiente de desenvolvimento.
 
-### Admin
-- Email: `admin@bellachain.com`
-- Senha: `admin123`
+## Programa Solana (em desenvolvimento)
 
-### Funcionário
-- Email: `ana@bellachain.com`
-- Senha: `ana123`
+O cÃ³digo Anchor estÃ¡ em `solana-programs/bella-packages`. Instale Rust, Solana CLI e Anchor CLI compatÃ­veis com Anchor 0.31.1. O Program ID atual Ã© apenas um endereÃ§o de exemplo; gere um endereÃ§o prÃ³prio e alinhe `Anchor.toml` e `programs/bella_packages/src/lib.rs` antes de compilar ou publicar.
 
-### Cliente
-- Email: `marina@bellachain.com`
-- Senha: `marina123`
+Configure `SOLANA_PAYMENT_MINT`, `SOLANA_PROGRAM_ID` e `SOLANA_RPC_URL` no backend. No frontend, configure `VITE_SOLANA_PROGRAM_ID`, `VITE_SOLANA_TOKEN_DECIMALS` e opcionalmente `VITE_SOLANA_RPC_URL` (padrÃ£o Devnet).
 
-**Nota:** As senhas no banco estão criptografadas com bcrypt. Use as credenciais acima para fazer login.
 
-## 7. TESTAR A API
 
-### Login
-```bash
-curl -X POST http://localhost:3001/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "marina@bellachain.com",
-    "senha": "marina123"
-  }'
-```
+A conexao direta usa a porta 5432 e pode exigir IPv6. Para um ambiente que so tenha IPv4, selecione Session pooler em Connect no painel Supabase e use a connection string exibida ali.
 
-Resposta:
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "tipo_usuario": "cliente",
-  "usuario_id": 4,
-  "nome": "Marina Costa",
-  "email": "marina@bellachain.com",
-  "message": "Login realizado com sucesso"
-}
-```
-
-### Listar Clientes
-```bash
-curl http://localhost:3001/api/clientes
-```
-
-### Obter Perfil do Cliente Autenticado
-```bash
-curl -H "Authorization: Bearer seu_token_aqui" \
-  http://localhost:3001/api/clientes/meu-perfil
-```
-
-### Resgatar Recompensa
-```bash
-curl -X POST http://localhost:3001/api/recompensas/resgatar \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer seu_token_aqui" \
-  -d '{
-    "cliente_id": 1,
-    "recompensa_id": 1
-  }'
-```
-
-## 8. BUILD PARA PRODUÇÃO
-
-### Frontend
-```bash
-cd frontend
-npm run build
-```
-
-Arquivos otimizados em: `frontend/dist/`
-
-### Backend
-```bash
-cd backend
-npm run start
-```
-
-## 9. TROUBLESHOOTING
-
-### Erro de conexão ao MySQL
-- Verifique se o MySQL está rodando
-- Confira as credenciais em `.env`
-- Verifique o host e porta (padrão: localhost:3306)
-
-### Porta 3001 já em uso
-```bash
-# Mude a porta em .env ou use:
-PORT=3002 npm run dev
-```
-
-### Porta 5173 já em uso
-```bash
-npm run dev -- --port 5174
-```
-
-### Token JWT inválido
-- Verifique se o JWT_SECRET em `.env` é o mesmo
-- Verifique se o token não expirou (padrão: 24h)
-
-## 10. PRÓXIMOS PASSOS
-
-1. Configurar banco de dados em produção
-2. Configurar contrato inteligente do EVM
-3. Fazer deploy do backend (Heroku, AWS, DigitalOcean)
-4. Fazer deploy do frontend (Vercel, Netlify)
-5. Configurar CI/CD
-
-## 11. DOCUMENTAÇÃO ADICIONAL
-
-- API: `/docs/API.md`
-- Banco de Dados: `/docs/BANCO_DADOS.md`
-- Guia do Usuário: `/docs/GUIA_USUARIO.md`
-- README Principal: `/README.md`

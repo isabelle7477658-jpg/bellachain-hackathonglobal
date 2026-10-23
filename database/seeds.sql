@@ -1,16 +1,14 @@
 -- =============================================================================
--- BELLACHAIN - DADOS DE TESTE
+-- BELLACHAIN - DADOS DE TESTE (SUPABASE / POSTGRES)
 -- Insere dados iniciais para testes
 -- =============================================================================
-
-USE bellachain;
 
 -- =============================================================================
 -- 1. INSERIR USUÁRIOS
 -- =============================================================================
 
 -- Admin
-INSERT INTO usuarios (nome, email, senha, telefone, cpf, tipo, status) 
+INSERT INTO usuarios (nome, email, senha, telefone, cpf, tipo, status)
 VALUES (
   'Administrador',
   'admin@bellachain.com',
@@ -19,11 +17,12 @@ VALUES (
   '12345678901234',
   'admin',
   'ativo'
-);
+)
+ON CONFLICT (email) DO NOTHING;
 
 -- Funcionários
-INSERT INTO usuarios (nome, email, senha, telefone, cpf, tipo, status) 
-VALUES 
+INSERT INTO usuarios (nome, email, senha, telefone, cpf, tipo, status)
+VALUES
 (
   'Ana Silva - Cabeleireira',
   'ana@bellachain.com',
@@ -41,11 +40,12 @@ VALUES
   '12345678901236',
   'funcionario',
   'ativo'
-);
+)
+ON CONFLICT (email) DO NOTHING;
 
 -- Clientes
-INSERT INTO usuarios (nome, email, senha, telefone, cpf, tipo, status) 
-VALUES 
+INSERT INTO usuarios (nome, email, senha, telefone, cpf, tipo, status)
+VALUES
 (
   'Marina Costa',
   'marina@bellachain.com',
@@ -81,14 +81,15 @@ VALUES
   '12345678901240',
   'cliente',
   'ativo'
-);
+)
+ON CONFLICT (email) DO NOTHING;
 
 -- =============================================================================
 -- 2. INSERIR CLIENTES (Extensão de usuários)
 -- =============================================================================
 
 INSERT INTO clientes (usuario_id, saldo_pontos, categoria, total_gasto, total_pontos_ganhos, total_pontos_resgatados, ultima_visita)
-VALUES 
+VALUES
 (
   (SELECT id FROM usuarios WHERE email = 'marina@bellachain.com'),
   185,
@@ -96,7 +97,7 @@ VALUES
   520.00,
   235,
   50,
-  '2026-09-23 10:30:00'
+  '2026-09-23T10:30:00Z'
 ),
 (
   (SELECT id FROM usuarios WHERE email = 'juliana@bellachain.com'),
@@ -105,7 +106,7 @@ VALUES
   1200.00,
   490,
   70,
-  '2026-09-20 14:15:00'
+  '2026-09-20T14:15:00Z'
 ),
 (
   (SELECT id FROM usuarios WHERE email = 'carla@bellachain.com'),
@@ -114,7 +115,7 @@ VALUES
   280.00,
   150,
   75,
-  '2026-09-18 09:45:00'
+  '2026-09-18T09:45:00Z'
 ),
 (
   (SELECT id FROM usuarios WHERE email = 'daniela@bellachain.com'),
@@ -123,22 +124,23 @@ VALUES
   450.00,
   380,
   70,
-  '2026-09-21 16:20:00'
-);
+  '2026-09-21T16:20:00Z'
+)
+ON CONFLICT (usuario_id) DO NOTHING;
 
 -- =============================================================================
 -- 3. INSERIR SERVIÇOS
 -- =============================================================================
 
 INSERT INTO servicos (nome, descricao, valor, pontos_por_servico, categoria, ativo)
-VALUES 
+VALUES
 (
   'Corte de Cabelo',
   'Corte simples com acabamento profissional',
   50.00,
   8,
   'Cabelo',
-  1
+  TRUE
 ),
 (
   'Coloração',
@@ -146,7 +148,7 @@ VALUES
   120.00,
   15,
   'Cabelo',
-  1
+  TRUE
 ),
 (
   'Hidratação Capilar',
@@ -154,7 +156,7 @@ VALUES
   80.00,
   10,
   'Cabelo',
-  1
+  TRUE
 ),
 (
   'Escova Modelada',
@@ -162,7 +164,7 @@ VALUES
   40.00,
   5,
   'Cabelo',
-  1
+  TRUE
 ),
 (
   'Manicure',
@@ -170,7 +172,7 @@ VALUES
   35.00,
   5,
   'Unhas',
-  1
+  TRUE
 ),
 (
   'Pedicure',
@@ -178,7 +180,7 @@ VALUES
   45.00,
   6,
   'Unhas',
-  1
+  TRUE
 ),
 (
   'Alongamento de Unhas',
@@ -186,7 +188,7 @@ VALUES
   65.00,
   8,
   'Unhas',
-  1
+  TRUE
 ),
 (
   'Limpeza de Pele',
@@ -194,7 +196,7 @@ VALUES
   60.00,
   7,
   'Facial',
-  1
+  TRUE
 ),
 (
   'Depilação com Cera',
@@ -202,7 +204,7 @@ VALUES
   25.00,
   3,
   'Depilação',
-  1
+  TRUE
 ),
 (
   'Depilação Laser',
@@ -210,15 +212,16 @@ VALUES
   150.00,
   18,
   'Depilação',
-  1
-);
+  TRUE
+)
+ON CONFLICT (nome) DO NOTHING;
 
 -- =============================================================================
 -- 4. INSERIR RECOMPENSAS
 -- =============================================================================
 
 INSERT INTO recompensas (titulo, descricao, pontos_necessarios, tipo, valor_desconto, dinheiro_valor, quantidade_disponivel, ativa)
-VALUES 
+VALUES
 (
   '10% de Desconto',
   'Desconto de 10% válido em qualquer serviço do salão',
@@ -227,7 +230,7 @@ VALUES
   10.00,
   NULL,
   -1,
-  1
+  TRUE
 ),
 (
   '20% de Desconto',
@@ -237,7 +240,7 @@ VALUES
   20.00,
   NULL,
   -1,
-  1
+  TRUE
 ),
 (
   'Hidratação Gratuita',
@@ -247,7 +250,7 @@ VALUES
   NULL,
   NULL,
   -1,
-  1
+  TRUE
 ),
 (
   'Escova Gratuita',
@@ -257,7 +260,7 @@ VALUES
   NULL,
   NULL,
   -1,
-  1
+  TRUE
 ),
 (
   'R$ 30 de Desconto',
@@ -267,7 +270,7 @@ VALUES
   NULL,
   30.00,
   -1,
-  1
+  TRUE
 ),
 (
   'R$ 50 de Desconto',
@@ -277,7 +280,7 @@ VALUES
   NULL,
   50.00,
   -1,
-  1
+  TRUE
 ),
 (
   'Corte + Coloração Grátis',
@@ -287,7 +290,7 @@ VALUES
   NULL,
   NULL,
   -1,
-  1
+  TRUE
 ),
 (
   'Manicure + Pedicure Grátis',
@@ -297,20 +300,21 @@ VALUES
   NULL,
   NULL,
   -1,
-  1
-);
+  TRUE
+)
+ON CONFLICT (titulo) DO NOTHING;
 
 -- =============================================================================
 -- 5. INSERIR ATENDIMENTOS
 -- =============================================================================
 
 INSERT INTO atendimentos (cliente_id, funcionario_id, servico_id, data_atendimento, valor_servico, pontos_gerados, descricao, status)
-VALUES 
+VALUES
 (
   (SELECT id FROM clientes WHERE usuario_id = (SELECT id FROM usuarios WHERE email = 'marina@bellachain.com')),
   (SELECT id FROM usuarios WHERE email = 'ana@bellachain.com'),
-  3,
-  '2026-08-10 10:00:00',
+  (SELECT id FROM servicos WHERE nome = 'Hidratação Capilar'),
+  '2026-08-10T10:00:00Z',
   80.00,
   15,
   'Hidratação completa',
@@ -319,8 +323,8 @@ VALUES
 (
   (SELECT id FROM clientes WHERE usuario_id = (SELECT id FROM usuarios WHERE email = 'marina@bellachain.com')),
   (SELECT id FROM usuarios WHERE email = 'ana@bellachain.com'),
-  1,
-  '2026-08-18 14:30:00',
+  (SELECT id FROM servicos WHERE nome = 'Corte de Cabelo'),
+  '2026-08-18T14:30:00Z',
   50.00,
   8,
   'Corte simples',
@@ -329,8 +333,8 @@ VALUES
 (
   (SELECT id FROM clientes WHERE usuario_id = (SELECT id FROM usuarios WHERE email = 'marina@bellachain.com')),
   (SELECT id FROM usuarios WHERE email = 'ana@bellachain.com'),
-  2,
-  '2026-09-02 09:15:00',
+  (SELECT id FROM servicos WHERE nome = 'Coloração'),
+  '2026-09-02T09:15:00Z',
   120.00,
   10,
   'Coloração loiro dourado',
@@ -339,8 +343,8 @@ VALUES
 (
   (SELECT id FROM clientes WHERE usuario_id = (SELECT id FROM usuarios WHERE email = 'juliana@bellachain.com')),
   (SELECT id FROM usuarios WHERE email = 'beatriz@bellachain.com'),
-  5,
-  '2026-09-15 11:00:00',
+  (SELECT id FROM servicos WHERE nome = 'Manicure'),
+  '2026-09-15T11:00:00Z',
   35.00,
   5,
   'Manicure com esmalte rosa',
@@ -349,8 +353,8 @@ VALUES
 (
   (SELECT id FROM clientes WHERE usuario_id = (SELECT id FROM usuarios WHERE email = 'juliana@bellachain.com')),
   (SELECT id FROM usuarios WHERE email = 'ana@bellachain.com'),
-  2,
-  '2026-09-10 10:00:00',
+  (SELECT id FROM servicos WHERE nome = 'Coloração'),
+  '2026-09-10T10:00:00Z',
   120.00,
   15,
   'Coloração e corte',
@@ -359,8 +363,8 @@ VALUES
 (
   (SELECT id FROM clientes WHERE usuario_id = (SELECT id FROM usuarios WHERE email = 'carla@bellachain.com')),
   (SELECT id FROM usuarios WHERE email = 'ana@bellachain.com'),
-  1,
-  '2026-09-08 15:45:00',
+  (SELECT id FROM servicos WHERE nome = 'Corte de Cabelo'),
+  '2026-09-08T15:45:00Z',
   50.00,
   8,
   'Corte com franja',
@@ -369,8 +373,8 @@ VALUES
 (
   (SELECT id FROM clientes WHERE usuario_id = (SELECT id FROM usuarios WHERE email = 'carla@bellachain.com')),
   (SELECT id FROM usuarios WHERE email = 'beatriz@bellachain.com'),
-  6,
-  '2026-09-18 13:20:00',
+  (SELECT id FROM servicos WHERE nome = 'Pedicure'),
+  '2026-09-18T13:20:00Z',
   45.00,
   6,
   'Pedicure vermelha',
@@ -379,8 +383,8 @@ VALUES
 (
   (SELECT id FROM clientes WHERE usuario_id = (SELECT id FROM usuarios WHERE email = 'daniela@bellachain.com')),
   (SELECT id FROM usuarios WHERE email = 'ana@bellachain.com'),
-  3,
-  '2026-09-21 11:30:00',
+  (SELECT id FROM servicos WHERE nome = 'Hidratação Capilar'),
+  '2026-09-21T11:30:00Z',
   80.00,
   10,
   'Hidratação profunda',
@@ -392,25 +396,25 @@ VALUES
 -- =============================================================================
 
 INSERT INTO resgates_recompensas (cliente_id, recompensa_id, data_resgate, status, codigo_resgate)
-VALUES 
+VALUES
 (
   (SELECT id FROM clientes WHERE usuario_id = (SELECT id FROM usuarios WHERE email = 'marina@bellachain.com')),
-  1,
-  '2026-09-10 16:00:00',
+  (SELECT id FROM recompensas WHERE titulo = '10% de Desconto'),
+  '2026-09-10T16:00:00Z',
   'pendente',
   'BELLA001'
 ),
 (
   (SELECT id FROM clientes WHERE usuario_id = (SELECT id FROM usuarios WHERE email = 'juliana@bellachain.com')),
-  3,
-  '2026-09-12 10:30:00',
+  (SELECT id FROM recompensas WHERE titulo = 'Hidratação Gratuita'),
+  '2026-09-12T10:30:00Z',
   'pendente',
   'BELLA002'
 ),
 (
   (SELECT id FROM clientes WHERE usuario_id = (SELECT id FROM usuarios WHERE email = 'carla@bellachain.com')),
-  2,
-  '2026-09-16 14:45:00',
+  (SELECT id FROM recompensas WHERE titulo = '20% de Desconto'),
+  '2026-09-16T14:45:00Z',
   'utilizado',
   'BELLA003'
 );
@@ -419,17 +423,17 @@ VALUES
 -- 7. VERIFICAÇÃO DOS DADOS INSERIDOS
 -- =============================================================================
 
-SELECT 'Total de Usuários:' as info, COUNT(*) as qtd FROM usuarios
+SELECT 'Total de Usuários:' AS info, COUNT(*)::INTEGER AS qtd FROM usuarios
 UNION ALL
-SELECT 'Total de Clientes:', COUNT(*) FROM clientes
+SELECT 'Total de Clientes:', COUNT(*)::INTEGER FROM clientes
 UNION ALL
-SELECT 'Total de Serviços:', COUNT(*) FROM servicos
+SELECT 'Total de Serviços:', COUNT(*)::INTEGER FROM servicos
 UNION ALL
-SELECT 'Total de Recompensas:', COUNT(*) FROM recompensas
+SELECT 'Total de Recompensas:', COUNT(*)::INTEGER FROM recompensas
 UNION ALL
-SELECT 'Total de Atendimentos:', COUNT(*) FROM atendimentos
+SELECT 'Total de Atendimentos:', COUNT(*)::INTEGER FROM atendimentos
 UNION ALL
-SELECT 'Total de Resgates:', COUNT(*) FROM resgates_recompensas;
+SELECT 'Total de Resgates:', COUNT(*)::INTEGER FROM resgates_recompensas;
 
 -- =============================================================================
 -- FIM DOS DADOS DE TESTE

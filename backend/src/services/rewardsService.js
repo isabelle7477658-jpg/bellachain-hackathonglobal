@@ -1,7 +1,5 @@
-export const calcularRecompensa = (valorAtendimento) => {
-  if (!valorAtendimento || Number(valorAtendimento) <= 0) {
-    return 0;
-  }
-
-  return Number(valorAtendimento) * 0.05;
+export const calcularPontosServico = (pontosConfigurados) => {
+  const pontos = Number(pontosConfigurados);
+  if (!Number.isInteger(pontos) || pontos < 0) return 0;
+  return pontos;
 };
